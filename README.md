@@ -1,4 +1,4 @@
-# 🩺 LLM Healthcare Pipeline (Beginner Friendly Guide)
+# 🩺 LLM Healthcare Pipeline 
 
 Welcome to the **LLM Healthcare Pipeline** project! This guide is for **new developers**, **non-machine-learning engineers**, or anyone curious about how AI can help with health data like ECGs and EEGs.
 
