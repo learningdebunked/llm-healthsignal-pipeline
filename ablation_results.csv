@@ -1,0 +1,5 @@
+Config,Accuracy,F1 Score,LLM Helpfulness
+A (LSTM),0.84,0.81,
+B (GAN + LSTM),0.89,0.87,
+C (Full GenAI),0.91,0.89,4.6
+D (LSTM + GPT-2),0.85,0.82,4.5
