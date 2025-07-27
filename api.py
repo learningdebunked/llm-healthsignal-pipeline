@@ -1,7 +1,18 @@
 # === 3.3 Frontend ===
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
+
 from flask import Flask, request, jsonify, render_template
+from inference import generate_prompt_based_response
 
 app = Flask(__name__)
+
+@app.route("/")
+def index():
+    """
+    Root route that redirects to dashboard
+    """
+    return render_template("dashboard.html")
 
 @app.route("/dashboard")
 def dashboard():
@@ -36,4 +47,7 @@ def log_feedback(feedback_data):
         f.write(str(feedback_data) + "\n")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("🩺 Starting Healthcare AI API Server...")
+    print("📊 Dashboard available at: http://localhost:3333")
+    print("🔗 API endpoints: /ask, /feedback, /dashboard")
+    app.run(debug=True, port=3333, host='127.0.0.1')

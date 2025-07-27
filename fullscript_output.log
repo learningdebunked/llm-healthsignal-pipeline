@@ -1,0 +1,7 @@
+/Users/ajit/Documents/underserve-community/llm-healthsignal-pipeline/.venv/lib/python3.9/site-packages/urllib3/__init__.py:35: NotOpenSSLWarning: urllib3 v2 only supports OpenSSL 1.1.1+, currently the 'ssl' module is compiled with 'LibreSSL 2.8.3'. See: https://github.com/urllib3/urllib3/issues/3020
+  warnings.warn(
+Starting LLM Healthcare Pipeline...
+ * Serving Flask app 'FullScript'
+ * Debug mode: on
+Address already in use
+Port 7000 is in use by another program. Either identify and stop that program, or start the server with a different port.

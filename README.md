@@ -1,4 +1,4 @@
-# 🩺 LLM Healthcare Pipeline 
+# 🩺 LLM Healthcare Pipeline
 
 Welcome to the **LLM Healthcare Pipeline** project! This guide is for **new developers**, or anyone curious about how AI can help with health data like ECGs and EEGs.
 
@@ -7,6 +7,7 @@ Welcome to the **LLM Healthcare Pipeline** project! This guide is for **new deve
 ## 🤖 What This Project Does (In Simple Terms)
 
 Imagine you have a machine that can:
+
 - Read heart and brain signals (like ECG and EEG)
 - Clean them up (remove noise)
 - Break them into pieces
@@ -19,21 +20,22 @@ That's what this project does, step by step.
 
 ## 💡 Technologies Used
 
-| Tool | What it does |
-|------|--------------|
-| `wfdb` | Downloads ECG/EEG data from PhysioNet |
-| `numpy` | Math with arrays (like Excel but for code) |
-| `scipy` | Helps filter out noise from signals |
-| `keras` / `tensorflow` | Trains and runs AI models (like LSTM) |
-| `transformers` | Lets us use GPT-2 to write natural language |
-| `flask` | Turns our code into a web app with buttons |
-| `sklearn` | Helps prepare data and split it |
+| Tool                   | What it does                                |
+| ---------------------- | ------------------------------------------- |
+| `wfdb`                 | Downloads ECG/EEG data from PhysioNet       |
+| `numpy`                | Math with arrays (like Excel but for code)  |
+| `scipy`                | Helps filter out noise from signals         |
+| `keras` / `tensorflow` | Trains and runs AI models (like LSTM)       |
+| `transformers`         | Lets us use GPT-2 to write natural language |
+| `flask`                | Turns our code into a web app with buttons  |
+| `sklearn`              | Helps prepare data and split it             |
 
 ---
 
 ## 📂 File Descriptions
 
 ### 1. `data_loader.py`
+
 Loads health signal data and prepares it.
 
 - `bandpass_filter()`: Removes noise from raw data
@@ -42,6 +44,7 @@ Loads health signal data and prepares it.
 - `segment_signal_data()`: Breaks a long signal into smaller pieces
 
 ### 2. `model_train.py`
+
 Trains an AI model (LSTM) using cleaned signal data.
 
 - It loads multiple datasets (ECG, EEG, etc.)
@@ -50,13 +53,17 @@ Trains an AI model (LSTM) using cleaned signal data.
 - Trains it to classify heartbeats or sleep stages
 
 ### 3. `inference.py`
+
 Uses the model to:
+
 - Predict what's happening in a signal
 - Explain it using GPT-2 (language model)
 - Fill in missing signal data using GANs or diffusion
 
 ### 4. `api.py`
+
 Runs a small web server with 3 buttons:
+
 - `/dashboard`: a web page (UI not included)
 - `/ask`: lets users ask questions (uses GPT-2 to answer)
 - `/feedback`: saves user suggestions to a file
@@ -94,15 +101,20 @@ This project supports 6 real medical datasets from [https://physionet.org](https
 
 1. ✅ Install Python 3
 2. ✅ Open terminal and clone the repo
+
 ```bash
 git clone https://github.com/yourname/llm-healthcare-pipeline.git
 cd llm-healthcare-pipeline
 ```
+
 3. ✅ Install required packages:
+
 ```bash
 pip install -r requirements.txt
 ```
+
 4. ✅ Run the web app:
+
 ```bash
 python api.py
 ```
@@ -114,6 +126,7 @@ Then go to: [http://localhost:5000](http://localhost:5000)
 ## 🧪 Try This
 
 ### Example prompt:
+
 ```json
 POST /ask
 {
@@ -122,6 +135,7 @@ POST /ask
 ```
 
 You’ll get a response like:
+
 ```
 "Atrial Fibrillation is a common irregular heartbeat..."
 ```
@@ -130,16 +144,16 @@ You’ll get a response like:
 
 ## 📘 Glossary (For Beginners)
 
-| Term | Meaning |
-|------|--------|
-| ECG | Electrical signal from the heart |
-| EEG | Electrical signal from the brain |
-| Signal | Time-series data (changing values over time) |
-| Filter | Removes noise or unwanted parts |
-| LSTM | A type of AI good at learning sequences |
-| GPT-2 | A text-generating AI (like ChatGPT) |
-| Classify | Predict a label for input data |
-| GAN | An AI that can create realistic fake data |
+| Term     | Meaning                                      |
+| -------- | -------------------------------------------- |
+| ECG      | Electrical signal from the heart             |
+| EEG      | Electrical signal from the brain             |
+| Signal   | Time-series data (changing values over time) |
+| Filter   | Removes noise or unwanted parts              |
+| LSTM     | A type of AI good at learning sequences      |
+| GPT-2    | A text-generating AI (like ChatGPT)          |
+| Classify | Predict a label for input data               |
+| GAN      | An AI that can create realistic fake data    |
 
 ---
 
