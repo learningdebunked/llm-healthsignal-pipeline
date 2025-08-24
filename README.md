@@ -165,4 +165,12 @@ MIT – free to use, just give credit.
 
 ## ❤️ Need Help?
 
-Open an issue or message me. Happy to help non-ML folks too!
+Open an issue or message me. Happy to help non-ML
+
+<img width="1187" height="778" alt="Healthcare_AI_model_comparision" src="https://github.com/user-attachments/assets/c01a7264-aced-4da2-9185-cc9ffe308ada" />
+<img width="1238" height="849" alt="compare_plot" src="https://github.com/user-attachments/assets/f0428b57-ddec-4d56-a7e6-115c8176c20d" />
+<img width="1016" height="717" alt="health-signal-board-1" src="https://github.com/user-attachments/assets/971684f7-528b-4f58-83be-d1ed48bcd1d5" />
+<img width="1055" height="814" alt="health-signal-board" src="https://github.com/user-attachments/assets/9f3c2619-dde6-4212-83d4-9eccedc100d0" />
+<img width="698" height="634" alt="model-output" src="https://github.com/user-attachments/assets/5903af5a-d550-41b3-b130-21eda279406f" />
+[IEEE_Format_Document_with_Tables_and_Figures.docx](https://github.com/user-attachments/files/21958476/IEEE_Format_Document_with_Tables_and_Figures.docx)
+folks too!
