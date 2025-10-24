@@ -11,7 +11,10 @@ def bandpass_filter(signal, lowcut=0.5, highcut=40.0, fs=250.0, order=5):
     return lfilter(b, a, signal, axis=0)
 
 def normalize(signal):
-    return 2 * (signal - np.min(signal)) / (np.max(signal) - np.min(signal)) - 1
+    eps = 1e-8
+    mean = np.mean(signal, axis=0, keepdims=True)
+    std = np.std(signal, axis=0, keepdims=True)
+    return (signal - mean) / (std + eps)
 
 def load_physionet_dataset(database_name, record_id):
     wfdb.dl_database(database_name, dl_dir=database_name)
@@ -32,12 +35,15 @@ def load_physionet_dataset(database_name, record_id):
         'fields': record.sig_name
     }
 
-def segment_signal_data(signal, annotations, window_size=3000):
+def segment_signal_data(signal, annotations, window_size=3000, overlap=0.5):
     segments, labels = [], []
-    for i in range(0, len(signal) - window_size, window_size):
+    step_size = max(1, int(window_size * (1 - overlap)))
+    seg_idx = 0
+    for i in range(0, len(signal) - window_size + 1, step_size):
         segments.append(signal[i:i+window_size])
-        if i // window_size < len(annotations):
-            labels.append(annotations[i // window_size])
+        if seg_idx < len(annotations):
+            labels.append(annotations[seg_idx])
+        seg_idx += 1
     return np.array(segments), np.array(labels)
 
 def augment_signal(signal, noise_factor=0.05):
