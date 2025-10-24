@@ -39,3 +39,10 @@ def segment_signal_data(signal, annotations, window_size=3000):
         if i // window_size < len(annotations):
             labels.append(annotations[i // window_size])
     return np.array(segments), np.array(labels)
+
+def augment_signal(signal, noise_factor=0.05):
+    noise = np.random.normal(0, noise_factor, signal.shape)
+    augmented = signal + noise
+    scale = np.random.uniform(0.8, 1.2)
+    augmented = augmented * scale
+    return augmented
