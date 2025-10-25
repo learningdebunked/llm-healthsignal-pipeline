@@ -5,10 +5,18 @@ from scipy.signal import butter, lfilter
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils.class_weight import compute_class_weight
+from sklearn.metrics import (
+    accuracy_score,
+    recall_score,
+    f1_score,
+    roc_auc_score,
+    confusion_matrix,
+)
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, LSTM, Dropout
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import ReduceLROnPlateau
+from tensorflow.keras.callbacks import ReduceLROnPlateau, Callback
+from tensorflow.keras.optimizers import Adam
 
 
 # Predefined templates to generate prompts for the LLM
@@ -119,6 +127,92 @@ def augment_signal(signal, noise_factor=0.05, scale_range=(0.8, 1.2), max_shift_
     
     return augmented
 
+class MetricsCallback(Callback):
+    """
+    Custom callback to compute comprehensive evaluation metrics during training.
+    Implements metrics from paper Section VI.B:
+    - Accuracy
+    - Sensitivity (Recall)
+    - Specificity
+    - F1-Score
+    - AUC (Area Under ROC Curve)
+    """
+    def __init__(self, validation_data, n_classes):
+        super().__init__()
+        self.validation_data = validation_data
+        self.n_classes = n_classes
+        self.history = {
+            'val_sensitivity': [],
+            'val_specificity': [],
+            'val_f1': [],
+            'val_auc': []
+        }
+    
+    def on_epoch_end(self, epoch, logs=None):
+        X_val, y_val = self.validation_data
+        
+        # Get predictions
+        y_pred_proba = self.model.predict(X_val, verbose=0)
+        y_pred = np.argmax(y_pred_proba, axis=1)
+        y_true = np.argmax(y_val, axis=1)
+        
+        # 1. Accuracy (already in logs)
+        accuracy = accuracy_score(y_true, y_pred)
+        
+        # 2. Sensitivity (Recall) - macro average
+        sensitivity = recall_score(y_true, y_pred, average='macro', zero_division=0)
+        
+        # 3. Specificity - computed per class then averaged
+        specificity = self._compute_specificity(y_true, y_pred)
+        
+        # 4. F1-Score - macro average
+        f1 = f1_score(y_true, y_pred, average='macro', zero_division=0)
+        
+        # 5. AUC - macro OVR (One-vs-Rest)
+        try:
+            auc = roc_auc_score(y_val, y_pred_proba, average='macro', multi_class='ovr')
+        except ValueError:
+            auc = 0.0  # Handle cases with missing classes
+        
+        # Store in history
+        self.history['val_sensitivity'].append(float(sensitivity))
+        self.history['val_specificity'].append(float(specificity))
+        self.history['val_f1'].append(float(f1))
+        self.history['val_auc'].append(float(auc))
+        
+        # Update logs for display
+        logs['val_sensitivity'] = sensitivity
+        logs['val_specificity'] = specificity
+        logs['val_f1'] = f1
+        logs['val_auc'] = auc
+        
+        # Print metrics
+        print(f"\n  Validation Metrics:")
+        print(f"    Accuracy:     {accuracy:.4f}")
+        print(f"    Sensitivity:  {sensitivity:.4f} (macro recall)")
+        print(f"    Specificity:  {specificity:.4f} (macro)")
+        print(f"    F1-score:     {f1:.4f} (macro)")
+        print(f"    ROC AUC:      {auc:.4f} (macro OVR)")
+    
+    def _compute_specificity(self, y_true, y_pred):
+        """
+        Compute specificity per class and return macro average.
+        Specificity = TN / (TN + FP)
+        """
+        cm = confusion_matrix(y_true, y_pred, labels=list(range(self.n_classes)))
+        specificities = []
+        
+        for c in range(self.n_classes):
+            TP = cm[c, c]
+            FN = cm[c, :].sum() - TP
+            FP = cm[:, c].sum() - TP
+            TN = cm.sum() - (TP + FP + FN)
+            denom = TN + FP
+            spec = TN / denom if denom > 0 else 0.0
+            specificities.append(spec)
+        
+        return float(np.mean(specificities))
+
 def train_combined_model(
     augment_prob=0.5,
     noise_factor=0.05,
@@ -181,7 +275,16 @@ def train_combined_model(
     model.add(Dropout(0.2))
     model.add(Dense(32, activation='relu'))
     model.add(Dense(y_enc.shape[1], activation='softmax'))
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    
+    # Configure Adam optimizer with paper-specified parameters (Section III.C.3)
+    optimizer = Adam(
+        learning_rate=0.001,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-7
+    )
+    
+    model.compile(optimizer=optimizer, loss='categorical_crossentropy', metrics=['accuracy'])
     # Class weights for imbalanced classes
     y_train_labels = np.argmax(y_train, axis=1)
     classes = np.arange(y_enc.shape[1])
@@ -190,16 +293,45 @@ def train_combined_model(
 
     # Learning rate scheduler
     lr_cb = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1)
+    
+    # Comprehensive metrics callback (Section VI.B)
+    metrics_cb = MetricsCallback(
+        validation_data=(X_test, y_test),
+        n_classes=y_enc.shape[1]
+    )
 
-    model.fit(
+    print("\n" + "="*60)
+    print("Starting training with comprehensive evaluation metrics")
+    print("Metrics computed per epoch: Accuracy, Sensitivity, Specificity, F1, AUC")
+    print("="*60 + "\n")
+
+    history = model.fit(
         X_train,
         y_train,
         epochs=5,
         batch_size=32,
         validation_data=(X_test, y_test),
         class_weight=class_weight_dict,
-        callbacks=[lr_cb],
+        callbacks=[lr_cb, metrics_cb],
+        verbose=1
     )
+    
+    # Print final metrics summary
+    print("\n" + "="*60)
+    print("FINAL EVALUATION METRICS (Test Set)")
+    print("="*60)
+    if metrics_cb.history['val_sensitivity']:
+        final_idx = -1
+        print(f"Accuracy:     {history.history['val_accuracy'][final_idx]:.4f}")
+        print(f"Sensitivity:  {metrics_cb.history['val_sensitivity'][final_idx]:.4f} (macro recall)")
+        print(f"Specificity:  {metrics_cb.history['val_specificity'][final_idx]:.4f} (macro)")
+        print(f"F1-score:     {metrics_cb.history['val_f1'][final_idx]:.4f} (macro)")
+        print(f"ROC AUC:      {metrics_cb.history['val_auc'][final_idx]:.4f} (macro OVR)")
+    print("="*60 + "\n")
+    
+    # Attach metrics history to model for later access
+    model.metrics_history = metrics_cb.history
+    
     return model
 
 # Trains the model at runtime (can be moved to a startup script)
