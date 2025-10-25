@@ -82,6 +82,43 @@ def segment_signal_data(signal, annotations, window_size=3000, overlap=0.5):
         seg_idx += 1
     return np.array(segments), np.array(labels)
 
+def augment_signal(signal, noise_factor=0.05, scale_range=(0.8, 1.2), max_shift_ratio=0.1):
+    """
+    Applies data augmentation to biomedical signals as specified in paper Section III.C.1.
+    
+    Implements three augmentation techniques:
+    1. Temporal shifting: Shifts signal along time axis
+    2. Additive Gaussian noise: Adds random noise to simulate artifacts
+    3. Amplitude scaling: Randomly scales signal amplitude
+    
+    Args:
+        signal: Input signal array of shape (time_steps, channels)
+        noise_factor: Standard deviation of Gaussian noise
+        scale_range: Tuple (min_scale, max_scale) for amplitude scaling
+        max_shift_ratio: Maximum temporal shift as ratio of signal length
+    
+    Returns:
+        Augmented signal with same shape as input
+    """
+    augmented = signal.copy()
+    
+    # 1. Temporal shifting
+    max_shift = int(signal.shape[0] * max_shift_ratio)
+    shift_amount = np.random.randint(-max_shift, max_shift + 1)
+    if shift_amount != 0:
+        augmented = np.roll(augmented, shift_amount, axis=0)
+    
+    # 2. Additive Gaussian noise
+    noise = np.random.normal(0, noise_factor, augmented.shape)
+    augmented = augmented + noise
+    
+    # 3. Amplitude scaling
+    low_scale, high_scale = scale_range
+    scale = np.random.uniform(low_scale, high_scale)
+    augmented = augmented * scale
+    
+    return augmented
+
 def train_combined_model(
     augment_prob=0.5,
     noise_factor=0.05,
@@ -121,14 +158,21 @@ def train_combined_model(
     )
 
     # Data augmentation: training set only
+    # Implements temporal shifting, amplitude scaling, and additive Gaussian noise
+    # as specified in paper Section III.C.1
     if augment_prob and noise_factor and scale_range:
-        low_s, high_s = scale_range
+        print(f"Applying data augmentation to {X_train.shape[0]} training samples...")
+        augmented_count = 0
         for i in range(X_train.shape[0]):
             if np.random.rand() < float(augment_prob):
-                seg = X_train[i]
-                noise = np.random.normal(0, float(noise_factor), seg.shape)
-                scale = np.random.uniform(float(low_s), float(high_s))
-                X_train[i] = (seg + noise) * scale
+                X_train[i] = augment_signal(
+                    X_train[i],
+                    noise_factor=noise_factor,
+                    scale_range=scale_range,
+                    max_shift_ratio=0.1
+                )
+                augmented_count += 1
+        print(f"✓ Augmented {augmented_count}/{X_train.shape[0]} samples ({augmented_count/X_train.shape[0]*100:.1f}%)")
 
     model = Sequential()
     model.add(LSTM(128, return_sequences=True, input_shape=(X.shape[1], X.shape[2])))
