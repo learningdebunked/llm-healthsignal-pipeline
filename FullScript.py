@@ -30,10 +30,34 @@ def get_prompt(template_name, context):
     template = prebuilt_prompts.get(template_name, "{}")
     return template.format(context)
 
-def bandpass_filter(signal, lowcut=0.5, highcut=40.0, fs=250.0, order=5):
+def bandpass_filter(signal, database_name, fs, order=5):
     """
-    Applies a bandpass Butterworth filter to remove noise from biomedical signals.
+    Applies modality-specific bandpass Butterworth filter to remove noise from biomedical signals.
+
+    Implements modality-adaptive preprocessing:
+    - ECG signals (MIT-BIH, MIMIC-III): 0.5-50 Hz to preserve QRS complexes and remove baseline wander
+    - EEG signals (Sleep-EDF): 0.5-30 Hz to preserve sleep-related frequency bands (delta, theta, alpha, beta)
+
+    Args:
+        signal: Input signal array of shape (n_samples, n_channels)
+        database_name: Dataset identifier for modality detection
+        fs: Sampling frequency in Hz
+        order: Filter order (default: 5)
+
+    Returns:
+        Filtered signal with same shape as input
     """
+    # Modality-specific filter parameters
+    filter_params = {
+        'mitdb':      {'low': 0.5, 'high': 50},   # ECG: preserve QRS, remove baseline wander
+        'mimic3wdb':  {'low': 0.5, 'high': 50},   # ECG: standard cardiac filtering
+        'sleep-edf':  {'low': 0.5, 'high': 30},   # EEG: preserve sleep frequency bands
+    }
+
+    # Get parameters for this dataset (fallback to generic 0.5-40 Hz)
+    params = filter_params.get(database_name, {'low': 0.5, 'high': 40})
+    lowcut, highcut = params['low'], params['high']
+
     nyq = 0.5 * fs
     low = lowcut / nyq
     high = highcut / nyq
@@ -100,7 +124,7 @@ def train_combined_model():
             print(f"Attempting to load {db}/{rec}...")
             data = load_physionet_dataset(db, rec)
             if data['signal'] is not None and len(data['signal']) > 0:
-                signal = normalize(bandpass_filter(data['signal'], fs=data['fs']))
+                signal = normalize(bandpass_filter(data['signal'], db, data['fs']))
                 X, y = segment_signal_data(signal, data['annotations'])
                 if len(X) > 0:
                     all_segments.append(X)
@@ -284,7 +308,7 @@ if __name__ == "__main__":
     # Test the key functions
     print("\n=== Testing Signal Processing Functions ===")
     test_signal = np.random.randn(1000)
-    filtered_signal = bandpass_filter(test_signal)
+    filtered_signal = bandpass_filter(test_signal, 'mitdb', 360.0)  # Test with ECG parameters
     normalized_signal = normalize(filtered_signal)
     print(f"Original signal shape: {test_signal.shape}")
     print(f"Filtered signal shape: {filtered_signal.shape}")

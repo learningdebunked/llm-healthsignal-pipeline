@@ -37,7 +37,7 @@ def prepare_data(overlap=0.5, seed=42):
     for db, rec in datasets:
         try:
             data = load_physionet_dataset(db, rec)
-            signal = normalize(bandpass_filter(data["signal"], fs=data["fs"]))
+            signal = normalize(bandpass_filter(data["signal"], db, data["fs"]))
             X, y = segment_signal_data(signal, data["annotations"], overlap=overlap)
             if len(X) == 0 or len(y) == 0:
                 continue

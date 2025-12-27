@@ -1,6 +1,10 @@
 # 🩺 LLM Healthcare Pipeline
 
+**🆕 Now Powered by GPT-4 for Superior Medical Interpretations!**
+
 Welcome to the **LLM Healthcare Pipeline** project! This guide is for **new developers**, or anyone curious about how AI can help with health data like ECGs and EEGs.
+
+> **Latest Update (Dec 2024):** Upgraded from GPT-2 to GPT-4 for significantly better medical accuracy and natural language generation. See [GPT4_MIGRATION_GUIDE.md](GPT4_MIGRATION_GUIDE.md) for details.
 
 ---
 
@@ -26,9 +30,11 @@ That's what this project does, step by step.
 | `numpy`                | Math with arrays (like Excel but for code)  |
 | `scipy`                | Helps filter out noise from signals         |
 | `keras` / `tensorflow` | Trains and runs AI models (like LSTM)       |
-| `transformers`         | Lets us use GPT-2 to write natural language |
+| `openai`               | Connects to GPT-4 for natural language      |
 | `flask`                | Turns our code into a web app with buttons  |
 | `sklearn`              | Helps prepare data and split it             |
+
+**🆕 NEW: Now powered by GPT-4 for superior medical interpretations!**
 
 ---
 
@@ -59,10 +65,11 @@ Trains an AI model (LSTM) using cleaned signal data with advanced techniques:
 Uses the model to:
 
 - Predict what's happening in a signal
-- Explain it using GPT-2 with **structured prompt templates**
-- Support both base and **fine-tuned medical GPT-2 models**
-- Generate clinical interpretations conditioned on classification confidence
+- Explain it using **GPT-4** with structured prompt templates
+- Generate clinical interpretations with high accuracy
 - Fill in missing signal data using GANs or diffusion
+
+**🆕 Upgraded to GPT-4 for better medical knowledge and explanations!**
 
 ### 4. `api.py`
 
@@ -74,15 +81,11 @@ Runs a REST API web server with endpoints:
 - `/classify`: signal classification + LLM interpretation
 - `/feedback`: saves user feedback to a file
 
-### 5. `finetune_gpt2.py` ⭐ NEW
+### 5. `finetune_gpt2.py` ⭐ DEPRECATED
 
-Fine-tunes GPT-2 on medical domain data:
+**Note:** This file is now deprecated as the application uses GPT-4 via API instead of local GPT-2 models. GPT-4 has extensive medical knowledge built-in and doesn't require fine-tuning.
 
-- Trains on ECG/EEG interpretations and clinical guidelines
-- Implements paper's hyperparameters (lr=5e-5, warmup=500)
-- Supports multiple corpus formats (JSONL, TXT)
-- Includes sample corpus for demonstration
-- Command-line interface with full configuration
+Previously used to fine-tune GPT-2 on medical domain data.
 
 ### 6. `eval_model.py`
 
@@ -123,23 +126,39 @@ This project supports 6 real medical datasets from [https://physionet.org](https
 
 ## 🔌 How to Run It
 
+### Prerequisites
+
+1. ✅ Python 3.8+
+2. ✅ OpenAI API Key ([Get one here](https://platform.openai.com/api-keys))
+
 ### Basic Setup
 
-1. ✅ Install Python 3.8+
-2. ✅ Clone the repository:
+1. Clone the repository:
 
 ```bash
 git clone https://github.com/learningdebunked/llm-healthsignal-pipeline.git
 cd llm-healthsignal-pipeline
 ```
 
-3. ✅ Install required packages:
+2. Install required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Option A: Run with Base GPT-2 (Quick Start)
+3. Set up your OpenAI API key:
+
+**Option A: Interactive Setup (Recommended)**
+```bash
+./setup_gpt4.sh
+```
+
+**Option B: Manual Setup**
+```bash
+export OPENAI_API_KEY='your-api-key-here'
+```
+
+4. Run the application:
 
 ```bash
 python3 api.py
@@ -147,37 +166,23 @@ python3 api.py
 
 Server starts at: [http://localhost:3333](http://localhost:3333)
 
-### Option B: Run with Fine-tuned Medical GPT-2 (Recommended)
+### 🆕 GPT-4 Configuration
 
-1. **Fine-tune the model** (one-time setup):
+The application now uses **GPT-4** for medical interpretations. You'll see:
 
-```bash
-# With your medical corpus
-python3 finetune_gpt2.py \
-    --data_dir ./medical_corpus \
-    --output_dir ./medical-gpt2 \
-    --epochs 3
-
-# OR use demo mode (sample data)
-python3 finetune_gpt2.py \
-    --data_dir ./nonexistent \
-    --output_dir ./demo-gpt2 \
-    --epochs 1
+```
+✓ GPT-4 API configured (key: ...last8chars)
+🩺 Starting Healthcare AI API Server (GPT-4 Powered)...
 ```
 
-2. **Set environment variable**:
+**Benefits of GPT-4:**
+- ✅ Superior medical knowledge and accuracy
+- ✅ Better natural language understanding
+- ✅ More coherent clinical explanations
+- ✅ No local model download required
+- ✅ Always up-to-date
 
-```bash
-export MEDICAL_GPT2_PATH=./medical-gpt2
-```
-
-3. **Run the API**:
-
-```bash
-python3 api.py
-```
-
-You should see: `✓ Fine-tuned medical GPT-2 model configured`
+**Cost:** ~$0.02-0.05 per query. See [GPT4_MIGRATION_GUIDE.md](GPT4_MIGRATION_GUIDE.md) for details.
 
 ---
 
@@ -198,7 +203,7 @@ curl -X POST http://localhost:3333/ask \
 }
 ```
 
-### 2. Signal Classification with Interpretation ⭐ NEW
+### 2. Signal Classification with Interpretation ⭐ GPT-4 POWERED
 
 ```bash
 curl -X POST http://localhost:3333/classify \
@@ -215,10 +220,12 @@ curl -X POST http://localhost:3333/classify \
 {
   "classification": "Atrial Fibrillation",
   "confidence": 0.92,
-  "interpretation": "Analysis of ECG signal:\n\n1. Finding: The signal has been classified as 'Atrial Fibrillation' with high confidence (92.0%).\n\n2. Clinical Significance: This finding requires immediate attention and specialist review.\n\n3. Recommended Actions: Immediate cardiology consultation recommended.",
+  "interpretation": "Based on the ECG signal analysis showing Atrial Fibrillation with 92% confidence:\n\n1. Finding: The signal demonstrates irregular R-R intervals and absence of distinct P waves, consistent with atrial fibrillation...\n\n2. Clinical Significance: This arrhythmia requires prompt evaluation due to increased stroke risk...\n\n3. Recommended Actions: Immediate cardiology referral for anticoagulation assessment and rate control strategy...",
   "signal_type": "ECG"
 }
 ```
+
+**Note:** GPT-4 provides much more detailed and accurate interpretations compared to GPT-2!
 
 ### 3. Query with Classification Context ⭐ NEW
 

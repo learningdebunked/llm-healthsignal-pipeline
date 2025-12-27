@@ -3,11 +3,13 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings
 
 # Print model configuration on startup
-medical_model_path = os.environ.get('MEDICAL_GPT2_PATH', 'gpt2')
-if medical_model_path != 'gpt2' and os.path.isdir(medical_model_path):
-    print(f"✓ Fine-tuned medical GPT-2 model configured: {medical_model_path}")
+openai_api_key = os.environ.get('OPENAI_API_KEY')
+if openai_api_key:
+    print(f"✓ GPT-4 API configured (key: ...{openai_api_key[-8:]})")
 else:
-    print("⚠ Using base GPT-2 model (no fine-tuning). Set MEDICAL_GPT2_PATH for domain-specific model.")
+    print("⚠ OPENAI_API_KEY not set. Please set it to use GPT-4.")
+    print("  Get your API key from: https://platform.openai.com/api-keys")
+    print("  Set it with: export OPENAI_API_KEY='your-key-here'")
 
 from flask import Flask, request, jsonify, render_template
 from inference import generate_prompt_based_response, explain_with_llm, classify_signal
@@ -25,15 +27,16 @@ def index():
     except:
         # Fallback if template not found
         return jsonify({
-            "message": "Healthcare AI API Server",
+            "message": "Healthcare AI API Server (GPT-4 Powered)",
             "endpoints": {
                 "/ask": "POST - General medical queries with optional classification context",
-                "/classify": "POST - Signal classification with LLM interpretation",
+                "/classify": "POST - Signal classification with GPT-4 interpretation",
                 "/feedback": "POST - User feedback collection",
                 "/dashboard": "GET - Web interface (if template available)"
             },
-            "version": "1.0",
-            "model": os.environ.get('MEDICAL_GPT2_PATH', 'gpt2 (base)')
+            "version": "2.0",
+            "model": "GPT-4 (OpenAI API)",
+            "status": "API key configured" if os.environ.get('OPENAI_API_KEY') else "API key missing"
         })
 
 @app.route("/dashboard")
@@ -152,12 +155,14 @@ def classify():
 
 
 if __name__ == "__main__":
-    print("🩺 Starting Healthcare AI API Server...")
+    print("🩺 Starting Healthcare AI API Server (GPT-4 Powered)...")
     print("📊 Dashboard available at: http://localhost:3333")
     print("🔗 API endpoints:")
     print("   - /ask: General medical queries with optional classification context")
-    print("   - /classify: Signal classification with LLM interpretation")
+    print("   - /classify: Signal classification with GPT-4 interpretation")
     print("   - /feedback: User feedback collection")
     print("   - /dashboard: Web interface")
-    print("\n💡 Tip: Set MEDICAL_GPT2_PATH environment variable to use fine-tuned model")
+    print("\n🔑 Important: Set OPENAI_API_KEY environment variable to use GPT-4")
+    print("   Get your API key from: https://platform.openai.com/api-keys")
+    print("   Set it with: export OPENAI_API_KEY='your-key-here'")
     app.run(debug=True, port=3333, host='127.0.0.1')
